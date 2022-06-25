@@ -1,4 +1,5 @@
 const sha1 = require('sha1');
+const Queue = require('bull');
 const dbClient = require('../utils/db');
 
 exports.postNew = async (req, res) => {
@@ -14,9 +15,18 @@ exports.postNew = async (req, res) => {
     return res.status(400).json({ error: 'Already exist' });
   }
   const sha = sha1(password);
-  const filteredDocs = await dbClient.user.insertOne({ email, password: sha });
+  let insert;
+  try {
+    insert = await dbClient.user.insertOne({ email, password: sha });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  const UsQue = Queue('UsQue');
+  UsQue.add({ userId: insert.insertedId });
+
   const result = {
-    id: filteredDocs.insertedId,
+    id: insert.insertedId,
     email,
   };
   return res.status(201).json(result);
