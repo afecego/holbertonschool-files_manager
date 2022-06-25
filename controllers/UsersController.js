@@ -29,5 +29,5 @@ exports.postNew = async (req, res) => {
     id: insert.insertedId,
     email,
   };
-  return res.status(201).json(result);
+  return res.status(201).send(result);
 };
